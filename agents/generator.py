@@ -2,10 +2,15 @@ import os, textwrap
 from openai import OpenAI
 from dotenv import load_dotenv
 import streamlit as st
-
-# Load .env locally, fallback to Streamlit secrets on deployment
+from dotenv import load_dotenv
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY", st.secrets.get("OPENAI_API_KEY"))
+
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    try:
+        api_key = st.secrets["OPENAI_API_KEY"]
+    except Exception:
+        raise ValueError("❌ OPENAI_API_KEY not found. Please add it to .env or Streamlit secrets.")
 
 def generate_readme(project_title, author, description, run_instructions, github=None, linkedin=None, style="Professional"):
     client = OpenAI(api_key=api_key)
