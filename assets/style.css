@@ -1,0 +1,26 @@
+/* Custom ReadMeGenie Theme */
+body {
+    background-color: #f8fafc;
+    color: #222;
+    font-family: "Inter", sans-serif;
+}
+
+h1, h2, h3 {
+    color: #333;
+}
+
+.sidebar .sidebar-content {
+    background: linear-gradient(180deg, #e0f7fa, #f1f8ff);
+    color: #000;
+}
+
+footer {
+    text-align: center;
+    font-size: 14px;
+    color: #888;
+}
+
+button, .stButton>button {
+    border-radius: 8px;
+    font-weight: 600;
+}
