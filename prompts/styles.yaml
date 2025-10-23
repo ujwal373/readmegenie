@@ -1,0 +1,15 @@
+professional:
+  tone: "Formal and business-like. Focus on clarity and structure."
+  emoji: false
+
+minimal:
+  tone: "Concise and clean. Minimal markdown, no emojis."
+  emoji: false
+
+fancy:
+  tone: "Modern, developer-friendly with badges and visual appeal."
+  emoji: true
+
+emoji:
+  tone: "Playful and expressive with emoji headers and friendly tone."
+  emoji: true
