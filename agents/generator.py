@@ -1,22 +1,24 @@
-import os, textwrap
-from openai import OpenAI
+import os, textwrap, yaml
 from dotenv import load_dotenv
 import streamlit as st
-from dotenv import load_dotenv
-load_dotenv()
+from openai import OpenAI
+from agents.utils import detect_stack
 
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key:
-    try:
-        api_key = st.secrets["OPENAI_API_KEY"]
-    except Exception:
-        raise ValueError("❌ OPENAI_API_KEY not found. Please add it to .env or Streamlit secrets.")
+load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key)
+
+def load_style(style_name):
+    with open("prompts/styles.yaml") as f:
+        styles = yaml.safe_load(f)
+    return styles.get(style_name.lower(), styles["professional"])
 
 def generate_readme(project_title, author, description, run_instructions, github=None, linkedin=None, style="Professional"):
-    client = OpenAI(api_key=api_key)
-    
-    system_prompt = "You are ReadMeGenie, an expert in writing beautiful, developer-friendly README.md files."
-    
+    style_cfg = load_style(style)
+    stack_info = detect_stack(description, run_instructions)
+
+    system_prompt = "You are ReadMeGenie, an expert in crafting beautiful README.md files for developers."
+
     user_prompt = textwrap.dedent(f"""
     Project Title: {project_title}
     Author: {author}
@@ -24,15 +26,18 @@ def generate_readme(project_title, author, description, run_instructions, github
     How to Run: {run_instructions}
     GitHub: {github or "Not provided"}
     LinkedIn: {linkedin or "Not provided"}
-    Style: {style}
 
-    Write a clean, detailed README.md with:
-    1. Title with emojis/badges
-    2. Overview & Features
-    3. Folder Structure (code block)
-    4. Installation + Run Steps
-    5. Author Links (GitHub + LinkedIn)
-    Use Markdown formatting.
+    Detected Tech Stack:
+    {', '.join(stack_info)}
+
+    Tone: {style_cfg['tone']}
+    Use Emojis: {style_cfg['emoji']}
+
+    Please generate a README.md that:
+    - Includes relevant setup or prerequisites based on the detected stack.
+    - Matches the requested tone/style.
+    - Contains sections: Overview, Features, Folder Structure, Installation, Usage, Author Info.
+    - Is formatted in Markdown.
     """)
 
     response = client.chat.completions.create(
@@ -43,5 +48,4 @@ def generate_readme(project_title, author, description, run_instructions, github
         ],
         temperature=0.7
     )
-
     return response.choices[0].message.content.strip()
