@@ -1,7 +1,7 @@
 import streamlit as st
 from agents.generator import generate_readme
 import base64
-
+from agents.github_analyzer import analyze_repo
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="ReadMeGenie 🧞‍♂️", page_icon="🧞‍♂️", layout="wide")
 
@@ -68,3 +68,19 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+st.sidebar.subheader("🔗 Optional: GitHub Repository URL")
+repo_url = st.sidebar.text_input("Paste your GitHub repo link (optional)")
+auto_analyze = st.sidebar.button("🧠 Auto-Analyze Repo")
+
+if auto_analyze and repo_url:
+    with st.spinner("🔍 Analyzing GitHub repository..."):
+        try:
+            auto_summary = analyze_repo(repo_url)
+            st.success("✅ Repository analyzed successfully!")
+            st.text_area("📄 Auto Summary (editable)", value=auto_summary, height=200, key="auto_summary")
+            # Pre-fill description for next generation step
+            description = auto_summary
+        except Exception as e:
+            st.error(f"❌ GitHub analysis failed: {e}")
+
