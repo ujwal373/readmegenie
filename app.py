@@ -84,3 +84,14 @@ if auto_analyze and repo_url:
         except Exception as e:
             st.error(f"❌ GitHub analysis failed: {e}")
 
+from agents.badge_agent import generate_badge_block
+
+auto_summary, meta = analyze_repo(repo_url)
+st.success("✅ Repository analyzed successfully!")
+badge_block = generate_badge_block(meta["owner"], meta["repo"], meta["language_breakdown"])
+st.markdown(badge_block, unsafe_allow_html=True)
+st.text_area("📄 Auto Summary (editable)", value=auto_summary, height=200, key="auto_summary")
+description = auto_summary
+
+readme_text = generate_readme(title, author, description, run, github, linkedin, style)
+readme_text = badge_block + readme_text  # prepend badges
