@@ -1,7 +1,24 @@
 import streamlit as st
 from agents.generator import generate_readme
-import base64
 from agents.github_analyzer import analyze_repo
+from agents.badge_agent import generate_badge_block
+import matplotlib.pyplot as plt
+from io import BytesIO
+import base64
+
+def language_chart(languages):
+    if not languages:
+        return ""
+    fig, ax = plt.subplots()
+    ax.pie(languages.values(), labels=languages.keys(), autopct="%1.1f%%")
+    ax.set_title("Language Breakdown")
+    buf = BytesIO()
+    plt.savefig(buf, format="png", bbox_inches="tight")
+    buf.seek(0)
+    b64 = base64.b64encode(buf.read()).decode()
+    plt.close(fig)
+    return f"![Language Chart](data:image/png;base64,{b64})\n\n"
+
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="ReadMeGenie 🧞‍♂️", page_icon="🧞‍♂️", layout="wide")
 
@@ -73,16 +90,34 @@ st.sidebar.subheader("🔗 Optional: GitHub Repository URL")
 repo_url = st.sidebar.text_input("Paste your GitHub repo link (optional)")
 auto_analyze = st.sidebar.button("🧠 Auto-Analyze Repo")
 
+meta = None
+badge_block = ""
+chart_md = ""
+
 if auto_analyze and repo_url:
     with st.spinner("🔍 Analyzing GitHub repository..."):
         try:
-            auto_summary = analyze_repo(repo_url)
-            st.success("✅ Repository analyzed successfully!")
-            st.text_area("📄 Auto Summary (editable)", value=auto_summary, height=200, key="auto_summary")
-            # Pre-fill description for next generation step
-            description = auto_summary
+            auto_summary, meta = analyze_repo(repo_url)
+            if meta:
+                st.success("✅ Repository analyzed successfully!")
+
+                # --- Generate badges and chart ---
+                badge_block = generate_badge_block(
+                    meta["owner"], meta["repo"], meta["language_breakdown"]
+                )
+                chart_md = language_chart(meta["language_breakdown"])
+
+                # --- Display results ---
+                st.markdown(badge_block, unsafe_allow_html=True)
+                st.markdown(chart_md, unsafe_allow_html=True)
+                st.text_area("📄 Auto Summary (editable)",
+                             value=auto_summary, height=200, key="auto_summary")
+                description = auto_summary
+            else:
+                st.warning("⚠️ Could not retrieve full metadata.")
         except Exception as e:
             st.error(f"❌ GitHub analysis failed: {e}")
+
 
 from agents.badge_agent import generate_badge_block
 

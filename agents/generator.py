@@ -49,3 +49,16 @@ def generate_readme(project_title, author, description, run_instructions, github
         temperature=0.7
     )
     return response.choices[0].message.content.strip()
+
+readme_text = generate_readme(title, author, description, run, github, linkedin, style)
+
+# If we already have badges or chart from GitHub analysis, inject them
+if badge_block or chart_md:
+    readme_text = badge_block + chart_md + readme_text
+
+st.success("✅ README Generated Successfully!")
+st.markdown(readme_text)
+st.download_button("💾 Download README.md",
+                   data=readme_text,
+                   file_name="README.md",
+                   mime="text/markdown")
