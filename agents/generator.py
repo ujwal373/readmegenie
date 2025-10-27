@@ -4,16 +4,24 @@ import streamlit as st
 from openai import OpenAI
 from agents.utils import detect_stack
 
+# --- Load API Key ---
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
+
+# --- Load Style Config ---
 def load_style(style_name):
     with open("prompts/styles.yaml") as f:
         styles = yaml.safe_load(f)
     return styles.get(style_name.lower(), styles["professional"])
 
-def generate_readme(project_title, author, description, run_instructions, github=None, linkedin=None, style="Professional"):
+
+# --- Generate README Core Function ---
+def generate_readme(project_title, author, description, run_instructions,
+                    github=None, linkedin=None, style="Professional"):
+    """Generates a professional README.md using OpenAI based on project details."""
+
     style_cfg = load_style(style)
     stack_info = detect_stack(description, run_instructions)
 
@@ -40,25 +48,16 @@ def generate_readme(project_title, author, description, run_instructions, github
     - Is formatted in Markdown.
     """)
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        temperature=0.7
-    )
-    return response.choices[0].message.content.strip()
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
 
-readme_text = generate_readme(title, author, description, run, github, linkedin, style)
-
-# If we already have badges or chart from GitHub analysis, inject them
-if badge_block or chart_md:
-    readme_text = badge_block + chart_md + readme_text
-
-st.success("✅ README Generated Successfully!")
-st.markdown(readme_text)
-st.download_button("💾 Download README.md",
-                   data=readme_text,
-                   file_name="README.md",
-                   mime="text/markdown")
+    except Exception as e:
+        return f"⚠️ Error generating README: {e}"
