@@ -5,6 +5,7 @@ from agents.badge_agent import generate_badge_block
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
+from agents.commit_agent import commit_readme
 
 def language_chart(languages):
     if not languages:
@@ -130,3 +131,27 @@ description = auto_summary
 
 readme_text = generate_readme(title, author, description, run, github, linkedin, style)
 readme_text = badge_block + readme_text  # prepend badges
+
+# --- COMMIT TO GITHUB SECTION ---
+if "meta" in locals() and meta and "readme_text" in locals():
+    st.divider()
+    st.subheader("📤 Publish to GitHub")
+
+    st.caption(
+        "Paste your **GitHub Personal Access Token (PAT)** below "
+        "to automatically create a new branch and upload this README.md to your repository."
+    )
+
+    github_token = st.text_input("🔑 GitHub Personal Access Token", type="password")
+    branch_name = st.text_input("🌿 Branch name", value="readmegenie-update")
+    commit_btn = st.button("🚀 Commit to GitHub")
+
+    if commit_btn and github_token:
+        with st.spinner("Pushing README to GitHub..."):
+            try:
+                commit_url = commit_readme(
+                    meta["owner"], meta["repo"], github_token, readme_text, branch_name
+                )
+                st.success(f"✅ README pushed successfully! [View branch on GitHub]({commit_url})")
+            except Exception as e:
+                st.error(f"❌ Commit failed: {e}")
